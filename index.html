@@ -231,34 +231,45 @@ function softRender(){if(!['home','proj','pal','insp','todo'].includes(st.v))ret
   render(0);scrollTo(0,y);if(id){const n=$(id);if(n){if(id==='qb'||id==='tn'){n.value=val;if(id==='qb')$('pg').innerHTML=tiles(val)}n.focus({preventScroll:true});try{n.setSelectionRange(sel[0],sel[1])}catch(e){}}}}
 
 /* Anmeldung */
+const tmo=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('Zeitüberschreitung')),ms))]);
+const canStore=()=>{try{localStorage.setItem('fw-t','1');localStorage.removeItem('fw-t');return true}catch(e){return false}};
+const lastEmail=()=>{try{return localStorage.getItem('fw-email')||''}catch(e){return ''}};
+const sessionSaved=()=>{try{for(let i=0;i<localStorage.length;i++)if(/^sb-.*-auth-token$/.test(localStorage.key(i)))return true}catch(e){}return false};
+addEventListener('online',()=>{if(st.v==='err')boot()});
 async function boot(){
   if(!CFG.url||!CFG.key||!window.supabase){st={v:'cfg'};render();return}
   if(!sb){sb=window.supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
     sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'&&USER)leave('Sitzung abgelaufen. Bitte neu anmelden.')})}
   st={v:'load'};render();
-  const{data,error}=await sb.auth.getSession();
-  if(error||!data.session){st={v:'auth'};render();return}
-  await enter(data.session.user)}
+  let r;try{r=await tmo(sb.auth.getSession(),10000)}catch(e){st={v:'err',msg:'Die Anmeldung wurde nicht rechtzeitig geprüft. Deine Anmeldung bleibt gespeichert.'};render();return}
+  if(r.error){st={v:'err',msg:errTxt(r.error)+'. Deine Anmeldung bleibt gespeichert.'};render();return}
+  if(!r.data.session){st={v:'auth'};render();return}
+  await enter(r.data.session.user)}
 async function enter(user){USER=user;$('so').hidden=false;st={v:'load'};render();
-  const m=await sb.rpc('is_member');
-  if(m.error){st={v:'err',msg:errTxt(m.error)};render();return}
+  let m;try{m=await tmo(sb.rpc('is_member'),12000)}catch(e){st={v:'err',msg:'Der Server antwortet nicht. Prüfe deine Verbindung.'};render();return}
+  if(m.error){if(m.status===401||/jwt|token/i.test(m.error.message||'')){const s=sb;leave('Deine Sitzung ist abgelaufen. Bitte neu anmelden.');s.auth.signOut({scope:'local'}).catch(()=>{});return}
+    st={v:'err',msg:errTxt(m.error)};render();return}
   if(m.data!==true){st={v:'deny'};render();return}
-  try{await loadAll()}catch(e){st={v:'err',msg:errTxt(e)};render();return}
+  try{await tmo(loadAll(),45000)}catch(e){st={v:'err',msg:errTxt(e)};render();return}
   subscribe();setSt();st={v:'home'};render(1)}
 function leave(m){USER=null;online=false;if(ch&&sb)sb.removeChannel(ch);ch=null;D=Object.fromEntries(TB.map(t=>[t,{}]));URLS={};P=[];pend.forEach(o=>clearTimeout(o.timer));pend.clear();$('so').hidden=true;setSt();st={v:'auth',msg:m};render(1)}
-async function login(){const e=$('au_e').value.trim(),p=$('au_p').value,m=$('au_m'),b=document.querySelector('[data-op=li]');
+async function login(){const e=$('au_e').value.trim(),p=$('au_p').value,m=$('au_m'),b=$('au_b');
   if(!e||!p){m.textContent='Bitte E-Mail und Passwort eingeben.';return}
   b.disabled=true;m.textContent='Anmelden …';
-  const{data,error}=await sb.auth.signInWithPassword({email:e,password:p});
+  let r;try{r=await tmo(sb.auth.signInWithPassword({email:e,password:p}),15000)}catch(x){b.disabled=false;m.textContent='Anmeldung fehlgeschlagen: keine Antwort vom Server.';return}
+  const{data,error}=r;
   if(error){b.disabled=false;m.textContent=/invalid login/i.test(error.message)?'E-Mail oder Passwort stimmt nicht.':'Anmeldung fehlgeschlagen: '+errTxt(error);return}
-  await enter(data.user)}
-$('so').onclick=async()=>{const s=sb;leave();try{await s.auth.signOut()}catch(e){}};
+  try{localStorage.setItem('fw-email',e)}catch(x){}
+  await enter(data.user);
+  if(USER&&canStore()&&!sessionSaved())msg('Hinweis: Die Anmeldung konnte auf diesem Gerät nicht gespeichert werden. Beim nächsten Öffnen musst du dich neu anmelden.')}
+/* Abmelden gilt nur für dieses Gerät, andere Geräte bleiben angemeldet */
+$('so').onclick=async()=>{const s=sb;leave();try{await s.auth.signOut({scope:'local'})}catch(e){}};
 
 /* Ansichten für Anmeldung und Status */
 const msgV=(t,s)=>`<h1>${esc(t)}<small>${esc(s||'')}</small></h1>`;
-const authV=m=>`<h1>Anmelden<small>Forever World ist privat. Nur freigegebene Konten haben Zugriff.</small></h1><div class="auth"><input class="ti s" id="au_e" type="email" placeholder="E-Mail" autocomplete="username"><input class="ti s" id="au_p" type="password" placeholder="Passwort" autocomplete="current-password"><button class="btn pri" data-op="li">Anmelden</button><div class="mt" id="au_m">${esc(m||'')}</div></div>`;
+const authV=m=>`<h1>Anmelden<small>Forever World ist privat. Nur freigegebene Konten haben Zugriff.</small></h1><form class="auth" id="au_f"><input class="ti s" id="au_e" name="email" type="email" placeholder="E-Mail" value="${esc(lastEmail())}" autocomplete="username" autocapitalize="off" spellcheck="false"><input class="ti s" id="au_p" name="password" type="password" placeholder="Passwort" autocomplete="current-password"><button class="btn pri" id="au_b" type="submit">Anmelden</button><div class="mt" id="au_m">${esc(m||'')}</div>${canStore()?'':'<div class="mt">Dein Browser blockiert das Speichern von Website-Daten (privates Fenster oder strenger Datenschutz). Du musst dich dann bei jedem Öffnen neu anmelden.</div>'}</form>`;
 const denyV=()=>msgV('Kein Zugriff','Das Konto '+(USER&&USER.email||'')+' ist nicht freigegeben. Die E-Mail muss in der Tabelle allowed_emails stehen.')+`<button class="btn" data-op="lo">Abmelden</button>`;
-const errV=()=>msgV('Verbindung fehlgeschlagen',st.msg)+`<button class="btn" data-op="rt">Erneut versuchen</button>`;
+const errV=()=>msgV('Verbindung fehlgeschlagen',st.msg)+`<button class="btn" data-op="rt">Erneut versuchen</button> <button class="btn" data-op="lo">Neu anmelden</button>`;
 const cfgV=()=>msgV('Einrichtung fehlt','config.js enthält keine Supabase-Werte, oder die Supabase-Bibliothek konnte nicht geladen werden.');
 
 /* Lokale Daten aus diesem Browser oder einer Export-Datei in die gemeinsame Datenbank übernehmen */
@@ -368,8 +379,8 @@ $('v').addEventListener('click',e=>{const b=e.target.closest('[data-op]');if(!b)
 $('v').addEventListener('input',e=>{const p=P.find(x=>x.id===st.p),id=e.target.id,v=e.target.value;
   if(id==='pn')dbUpd('projects',p.id,{name:v});else if(id==='pt')dbUpd('projects',p.id,{notes:v});else if(id==='pc')dbUpd('projects',p.id,{coords:v});
   else if(id==='ln')dbUpd('todo_lists',st.q,{name:v});else if(id==='qn')dbUpd('palettes',st.q,{name:v});else if(id==='qb')$('pg').innerHTML=tiles(v)});
-$('v').addEventListener('keydown',e=>{if(e.target.id==='au_p'&&e.key==='Enter'){login();return}
-  if(e.target.id==='au_e'&&e.key==='Enter'){$('au_p').focus();return}
+$('v').addEventListener('submit',e=>{e.preventDefault();if(e.target.id==='au_f')login()});
+$('v').addEventListener('keydown',e=>{if(e.target.id==='au_e'&&e.key==='Enter'&&!$('au_p').value){e.preventDefault();$('au_p').focus();return}
   if(e.target.id==='tn'&&e.key==='Enter'){const v=e.target.value.trim();if(!v)return;dbIns('todo_items',{id:nid(),list_id:st.q,text:v.slice(0,500),done:false});snd('add');keep();$('tn').focus();return}
   if(e.target.id==='qb'&&e.key==='Enter'){const v=e.target.value.trim(),c=cq();if(!v)return;const f=findB(v.toLowerCase()),name=(f?f.n[0]:v).slice(0,80);if(!c.blocks.includes(name)){addBlock(c.id,name);snd('add')}keep();$('qb').focus()}});
 $('zx').onclick=()=>$('zm').close();
