@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Forever World</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f2f7;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.82);--card:rgba(255,255,255,.7);--tx:#111;--tx2:#7c7c82;--bd:rgba(255,255,255,.7);--ac:#0a84ff;--fill:rgba(120,120,128,.14);--b1:#a5c8ff;--b2:#ffc9e3;--sp:cubic-bezier(.34,1.4,.64,1);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--glass:rgba(60,60,67,.45);--glass2:rgba(90,90,98,.6);--card:rgba(44,44,48,.6);--tx:#f5f5f7;--tx2:#98989f;--bd:rgba(255,255,255,.12);--fill:rgba(120,120,128,.28);--b1:#1b3a78;--b2:#4a1d3d;color-scheme:dark}}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font:15px/1.5 "Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::before,body::after{content:"";position:fixed;width:60vmax;height:60vmax;border-radius:50%;filter:blur(90px);z-index:-1;opacity:.75}
+body::before{background:var(--b1);top:-25vmax;left:-15vmax}body::after{background:var(--b2);bottom:-30vmax;right:-20vmax}
+.gl{background:var(--glass);backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);border:1px solid var(--bd);box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.wrap{max-width:1100px;margin:0 auto;padding:28px clamp(16px,4vw,40px) 90px}
+.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+.logo{font-weight:800;letter-spacing:-.03em;font-size:18px}
+button{font-family:inherit}
+.ib{width:44px;height:44px;border-radius:50%;border:0;cursor:pointer;color:var(--tx);font-size:19px;display:grid;place-items:center;transition:transform .4s var(--sp)}
+.ib:active,.btn:active{transform:scale(.9)}
+input,textarea{font:inherit;color:var(--tx);border:0;outline:0;width:100%;border-radius:14px;transition:box-shadow .25s}
+input:focus,textarea:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 35%,transparent)}
+.btn{border:0;border-radius:980px;padding:11px 20px;font-weight:600;cursor:pointer;background:var(--fill);color:var(--tx);transition:transform .35s var(--sp)}
+.btn.d{color:#ff453a;margin-top:30px}.btn.d.c{background:#ff453a;color:#fff}
+.lk{border:0;background:none;color:var(--ac);font-weight:600;font-size:14px;cursor:pointer;padding:2px 8px}
+.fw{animation:fw .55s var(--sp)}.bk{animation:bk .55s var(--sp)}
+@keyframes fw{from{opacity:0;transform:translateX(44px) scale(.98)}}@keyframes bk{from{opacity:0;transform:translateX(-44px) scale(.98)}}
+h1{font-size:clamp(32px,6vw,48px);font-weight:800;letter-spacing:-.045em;line-height:1.05;margin-bottom:22px}
+h1 small{display:block;font-size:14px;font-weight:500;color:var(--tx2);letter-spacing:0;margin-top:6px}
+h2{font-size:22px;font-weight:800;letter-spacing:-.03em;margin:34px 0 14px;display:flex;align-items:center;justify-content:space-between}
+.hg,.pl{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.card{border-radius:28px;overflow:hidden;background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--bd);box-shadow:0 6px 24px rgba(0,0,0,.06);cursor:pointer;transition:transform .5s var(--sp),box-shadow .3s}
+.card:hover{transform:translateY(-4px) scale(1.015);box-shadow:0 16px 40px rgba(0,0,0,.12)}.card:active{transform:scale(.97)}
+.cv{height:170px;background:var(--fill);display:grid;place-items:center;font-size:46px;overflow:hidden}.cv img{width:100%;height:100%;object-fit:cover}
+.cb{padding:14px 18px 18px}.cb h3{font-size:17px;font-weight:700;letter-spacing:-.02em}.cb p{color:var(--tx2);font-size:13px}
+.card.new{min-height:250px;display:grid;place-items:center;text-align:center;font-weight:700;color:var(--tx2);border:1.5px dashed var(--tx2);background:none;box-shadow:none}
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;color:var(--tx2);font-weight:600}
+.ti{font-size:clamp(28px,5vw,44px);font-weight:800;letter-spacing:-.04em;background:none;padding:6px 4px}
+.ti.s{font-size:16px;font-weight:600;letter-spacing:0;background:var(--fill);padding:12px 16px;margin:12px 0}
+.no,.co{background:none;resize:none;padding:6px 4px;font-size:16px}
+.co{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:var(--tx2)}
+.ig{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.ig div{position:relative;aspect-ratio:1;border-radius:22px;overflow:hidden;cursor:zoom-in;animation:fw .5s var(--sp)}.ig img{width:100%;height:100%;object-fit:cover}
+.ig .x{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;cursor:pointer}
+.drop{border:1.5px dashed var(--tx2);border-radius:22px;padding:22px;text-align:center;color:var(--tx2);cursor:pointer}
+.mos{display:grid;grid-template-columns:repeat(var(--n),1fr)}.mos img{width:100%;aspect-ratio:1;image-rendering:pixelated;display:block}.mos.big{border-radius:28px;overflow:hidden;max-width:560px}
+.cv .mos{width:100%;height:100%;grid-auto-rows:1fr}
+.bu{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 14px;background:var(--fill);border-radius:22px;padding:14px 16px}
+.bu div{display:flex;align-items:center;gap:10px;font-weight:600}.bu img{width:30px;height:30px;image-rendering:pixelated;border-radius:6px}.bu .lk{margin-left:auto;color:var(--tx2);font-size:18px}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.pt{border:0;background:var(--fill);border-radius:18px;padding:10px 4px 8px;color:var(--tx);font-size:11.5px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform .35s var(--sp)}
+.pt:active{transform:scale(.92)}.pt img{width:44px;height:44px;image-rendering:pixelated;border-radius:8px}.pt span{text-align:center;line-height:1.2}
+.pt.on{background:color-mix(in srgb,var(--ac) 22%,transparent);box-shadow:inset 0 0 0 2px var(--ac)}
+.mt{color:var(--tx2);padding:10px 0}
+#zm{width:100vw;height:100vh;max-width:100vw;max-height:100vh;margin:0;border:0;background:none;overflow:hidden}
+#zm::backdrop{background:rgba(0,0,0,.88);backdrop-filter:blur(14px)}
+#zm .z{position:absolute;inset:0;display:grid;place-items:center;overflow:auto;cursor:zoom-in}
+#zm img{max-width:94vw;max-height:90vh;border-radius:14px;transition:transform .45s var(--sp)}
+#zm.zz img{transform:scale(2.4)}
+#zm .ib{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:16px;z-index:2;color:#fff}
+dialog[open]{animation:fw .45s var(--sp)}
+.cl{display:grid;grid-template-columns:1fr 1fr;width:100%;height:100%}.cl img{width:100%;height:100%;object-fit:cover}.cl img:only-child{grid-column:1/-1;grid-row:1/-1}
+.tp{width:70%;text-align:center;font-size:30px}.pb{height:6px;border-radius:9px;background:var(--fill);margin-top:10px;overflow:hidden}.pb i{display:block;height:100%;background:var(--ac);border-radius:9px;transition:width .5s var(--sp)}.pb.big{height:10px;margin:0 0 18px}
+.ig.big{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}.ig.big div{aspect-ratio:4/3}
+.tl{display:flex;flex-direction:column;gap:8px}
+.tr{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:20px;background:var(--card);border:1px solid var(--bd);cursor:pointer;font-size:17px;font-weight:600;animation:fw .4s var(--sp);transition:transform .35s var(--sp)}.tr:active{transform:scale(.98)}.tr span{flex:1}
+.ck{width:26px;height:26px;border-radius:50%;border:2px solid var(--tx2);flex:none;transition:all .35s var(--sp)}.tr.dn .ck{background:var(--ac);border-color:var(--ac);box-shadow:inset 0 0 0 5px var(--bg)}.tr.dn span{text-decoration:line-through;opacity:.45}
+
+/* minimalistisch: alles kleiner, ruhiger */
+body{font-size:14px}
+body::before,body::after{opacity:.5}
+.wrap{max-width:940px;padding:20px clamp(14px,3.5vw,32px) 70px}
+.hd{margin-bottom:18px}.logo{font-size:14px;font-weight:700;letter-spacing:-.01em;color:var(--tx2)}
+.ib{width:36px;height:36px;font-size:15px}
+.btn{padding:8px 14px;font-size:13px}.btn.d{margin-top:26px}.lk{font-size:13px}
+h1{font-size:clamp(24px,4.5vw,32px);margin-bottom:16px}h1 small{font-size:12px;margin-top:3px}
+h2{font-size:15px;font-weight:700;letter-spacing:-.01em;margin:26px 0 10px;color:var(--tx2)}
+.hg,.pl{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.card{border-radius:20px;box-shadow:none}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.08)}
+.cv{height:112px;font-size:32px}
+.cb{padding:10px 14px 12px}.cb h3{font-size:14px;font-weight:600}.cb p{font-size:12px}
+.card.new{min-height:150px;font-size:13px}
+.bar{margin-bottom:12px;font-size:13px}
+.ti{font-size:clamp(22px,4vw,28px);padding:4px 2px}
+.ti.s{font-size:14px;padding:10px 14px;margin:8px 0;border-radius:12px}
+.no,.co{font-size:14px;padding:4px 2px}.co{font-size:12px}
+.ig{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.ig div{border-radius:14px}.ig .x{width:24px;height:24px;top:6px;right:6px;font-size:13px}
+.ig.big{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.drop{padding:16px;font-size:13px;border-radius:16px}
+.mos.big{max-width:340px;border-radius:20px}
+.bu{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px 12px;border-radius:16px;padding:10px 14px}
+.bu div{font-size:13px;font-weight:500;gap:8px}.bu img{width:24px;height:24px;border-radius:5px}
+.pg{grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px}
+.pt{border-radius:14px;padding:8px 3px 6px;font-size:10.5px;font-weight:500;gap:4px}.pt img{width:34px;height:34px;border-radius:6px}
+.tp{font-size:22px}.pb{height:4px}.pb.big{height:6px;margin-bottom:12px}
+.tr{padding:12px 14px;border-radius:16px;font-size:14px;font-weight:500;gap:12px}
+.ck{width:22px;height:22px}.tr.dn .ck{box-shadow:inset 0 0 0 4px var(--bg)}.tl{gap:6px}
+@keyframes fw{from{opacity:0;transform:translateX(24px) scale(.99)}}@keyframes bk{from{opacity:0;transform:translateX(-24px) scale(.99)}}
+
+.cv{position:relative}
+.cx{position:absolute;top:8px;right:8px;z-index:2;min-width:26px;height:26px;border-radius:99px;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:14px;cursor:pointer;opacity:0;transition:all .3s var(--sp)}
+.card:hover .cx,.cx.c{opacity:1}.cx.c{background:#ff453a;padding:0 10px}
+@media(hover:none){.cx{opacity:1}}
+h2 span{display:flex;gap:2px}
+#toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translate(-50%,16px);padding:9px 18px;border-radius:980px;background:rgba(30,30,32,.9);color:#fff;font-size:13px;opacity:0;pointer-events:none;transition:all .4s var(--sp);z-index:50}
+#toast.s{opacity:1;transform:translate(-50%,0)}
+
+#zm .z{overflow:hidden;cursor:grab;touch-action:none}
+#zm img{transform-origin:center;will-change:transform;user-select:none;-webkit-user-drag:none;transition:transform .35s var(--sp)}
+#zm img.dg{transition:none}
+.zb{width:40px;height:40px;border-radius:50%;border:0;color:#fff;font-size:18px;cursor:pointer;transition:transform .35s var(--sp)}.zb:active{transform:scale(.9)}
+.zbar{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:2}
+#zr{width:auto;padding:0 14px;font-size:13px;font-weight:600;border-radius:99px}
+.zn{position:absolute;top:50%;margin-top:-20px;z-index:2}.zn.l{left:14px}.zn.r{right:14px}
+
+/* Mehrspieler: Anmeldung, Status, Import */
+:root{--ok:#30d158;--er:#ff453a}
+[hidden]{display:none!important}
+.hd .r{display:flex;gap:8px;align-items:center}
+#ss{font-weight:500;font-size:11px;margin-left:8px}
+#ss::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--tx2);margin-right:5px;vertical-align:1px}
+#ss:empty{display:none}
+#ss.on::before{background:var(--ok)}#ss.sv::before{background:var(--ac)}#ss.er::before{background:var(--er)}
+.auth{display:flex;flex-direction:column;gap:8px;max-width:340px}.auth .ti.s{margin:0}
+.btn.pri{background:var(--ac);color:#fff}.btn:disabled{opacity:.5}
+.note{background:var(--fill);border-radius:16px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px}.note span{flex:1;min-width:180px}
+.mtl{margin-top:18px}
+#imp{border:0;border-radius:22px;padding:18px;width:min(520px,92vw);background:var(--bg);color:var(--tx);font-size:13px}
+#imp::backdrop{background:rgba(0,0,0,.5);backdrop-filter:blur(8px)}
+#imp h3{font-size:16px;margin-bottom:4px}#imp p{color:var(--tx2)}
+#imp textarea{height:150px;background:var(--fill);padding:10px;font:12px ui-monospace,Menlo,monospace;margin:10px 0;resize:vertical}
+#imp .row{display:flex;gap:8px;flex-wrap:wrap}
+.seg{display:flex;gap:4px;padding:4px;border-radius:980px;background:var(--fill);width:max-content;max-width:100%;margin-bottom:20px}.seg button{border:0;background:none;color:var(--tx2);font:inherit;font-weight:700;font-size:14px;padding:8px 18px;border-radius:980px;cursor:pointer;transition:background .25s,color .25s}.seg button.on{background:var(--glass2);color:var(--tx);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+#imp,#rd{border:0;border-radius:22px;padding:18px;width:min(560px,94vw);max-height:90vh;background:var(--bg);color:var(--tx);font-size:13px}
+#rd::backdrop{background:rgba(0,0,0,.5);backdrop-filter:blur(8px)}#rd h3{font-size:16px;margin-bottom:4px}#rd p{color:var(--tx2);margin-bottom:8px}
+#rd .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}#rd .row input{width:64px}
+.rc{display:flex;align-items:center;gap:8px;padding:8px;border-radius:16px;background:var(--fill);margin-bottom:8px;flex-wrap:wrap}.rc>img{width:52px;height:52px;border-radius:10px;object-fit:cover}.rc .pt{padding:6px 4px;min-width:70px}.rc.off{opacity:.4}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><span class="logo">⛏️ Forever World<span id="ss"></span></span><span class="r"><button class="ib gl" id="so" title="Abmelden" hidden>⎋</button><button class="ib gl" id="sn" title="Sounds">🔊</button></span></div>
+  <div id="v"></div>
+</div>
+<input id="fi" type="file" accept="image/*" multiple hidden><input id="tf" type="file" accept=".jar,.zip,.png,image/png" multiple hidden><input id="tfd" type="file" webkitdirectory multiple hidden><div id="toast"></div>
+<dialog id="imp"><h3>Lokale Daten importieren</h3><p>Füge den Inhalt der Export-Datei (fw-export.json) ein oder wähle die Datei. Bereits vorhandene Einträge werden nicht doppelt angelegt.</p><textarea id="imt" placeholder="JSON hier einfügen …"></textarea><div class="row"><button class="btn pri" id="imc">Importieren</button><button class="btn" onclick="$('imf').click()">Datei wählen</button><button class="btn" id="imx">Abbrechen</button></div><input id="imf" type="file" accept=".json,application/json" hidden></dialog>
+<input id="rf" type="file" accept="image/*" hidden><dialog id="rd"><h3>Palette aus Bild</h3><p id="rh"></p><div class="row"><label>Spalten <input class="ti s" id="rc" type="number" min="1" max="12"></label><label>Zeilen <input class="ti s" id="rr" type="number" min="1" max="8"></label></div><div id="rg" style="overflow:auto;max-height:52vh"></div><div class="row"><button class="btn pri" id="ra">Hinzufügen</button><button class="btn" id="rx">Abbrechen</button></div></dialog>
+<dialog id="zm"><button class="ib gl" id="zx">×</button><div class="z" id="zc"><img id="zi" alt="" draggable="false"></div><button class="zb gl zn l" id="zl">‹</button><button class="zb gl zn r" id="zn">›</button><div class="zbar"><button class="zb gl" id="zo">−</button><button class="zb gl" id="zr">1×</button><button class="zb gl" id="zp">+</button></div></dialog>
+
+<script>
+const $=s=>document.getElementById(s),esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+let db=null,P=[],st={v:'home'},mute=false,AC=null;
+try{mute=localStorage.getItem('fw-mute')==='1'}catch(e){}
+
+/* sanfte Sounds */
+function snd(k){if(mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const n=AC.currentTime,S={tap:[[660,0,.07]],open:[[523,0,.12],[784,.07,.18]],back:[[784,0,.1],[523,.07,.16]],add:[[587,0,.1],[880,.08,.22]],del:[[247,0,.2],[185,.08,.22]]}[k]||[];
+  for(const[f,d,l]of S){const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0,n+d);g.gain.linearRampToValueAtTime(.05,n+d+.015);g.gain.exponentialRampToValueAtTime(.0001,n+d+l);o.connect(g);g.connect(AC.destination);o.start(n+d);o.stop(n+d+l+.05)}}catch(e){}}
+$('sn').onclick=()=>{mute=!mute;try{localStorage.setItem('fw-mute',mute?'1':'0')}catch(e){}$('sn').textContent=mute?'🔇':'🔊';snd('tap')};$('sn').textContent=mute?'🔇':'🔊';
+document.addEventListener('click',e=>{if(e.target.closest('button,.card,.pt'))snd('tap')});
+
+/* Speicher */
+function openDB(){return new Promise(r=>{try{const q=indexedDB.open('fw-projekte',2);q.onupgradeneeded=()=>{const d=q.result;if(!d.objectStoreNames.contains('p'))d.createObjectStore('p',{keyPath:'id'});if(!d.objectStoreNames.contains('tx'))d.createObjectStore('tx',{keyPath:'k'})};q.onsuccess=()=>{db=q.result;db.transaction('p').objectStore('p').getAll().onsuccess=e=>{LOCAL=e.target.result;db.transaction('tx').objectStore('tx').getAll().onsuccess=f=>{f.target.result.forEach(o=>USR[o.k]=o.d);r()}}};q.onerror=()=>r()}catch(e){r()}})}
+/* ===== Supabase: gemeinsamer Datenbestand ===== */
+const CFG=window.FW_CONFIG||{},BK='inspiration',TB=['projects','palettes','palette_blocks','todo_lists','todo_items','images'];
+let sb=null,USER=null,online=false,ch=null,wasDown=false,busy=0,Q=Promise.resolve(),LOCAL=[],URLS={},URLS_T=0,D=Object.fromEntries(TB.map(t=>[t,{}]));
+const infl={},ipat={},pend=new Map(),nid=()=>(window.crypto&&crypto.randomUUID)?crypto.randomUUID():uid()+uid(),ts=x=>x?Date.parse(x):0;
+const errTxt=e=>{const m=(e&&(e.message||e.error_description||e.msg))||String(e);return /Failed to fetch|NetworkError|Load failed/i.test(m)?'keine Verbindung zum Server':m};
+function setSt(){const s=$('ss');if(!s)return;if(!USER){s.textContent='';s.className='';return}s.className=!online?'er':busy>0?'sv':'on';s.textContent=!online?'offline':busy>0?'speichert …':'live'}
+
+/* Schreibzugriffe laufen nacheinander, damit Eltern vor Kindern gespeichert werden */
+function enq(fn){busy++;setSt();const r=Q.then(fn);Q=r.catch(()=>{}).then(()=>{busy--;setSt()});return r}
+function wr(k,fn){infl[k]=(infl[k]||0)+1;return enq(fn).catch(fail).finally(()=>{if(!--infl[k])delete ipat[k]})}
+const dirty=k=>pend.has(k)||infl[k]>0;
+function fail(e){msg('Speichern fehlgeschlagen: '+errTxt(e));clearTimeout(fail.t);fail.t=setTimeout(()=>loadAll().then(softRender).catch(()=>{}),500)}
+
+/* Datenbank-Zeilen -> bisheriges Datenmodell (P), damit alle Ansichten unverändert bleiben */
+const cmp=(a,b)=>ts(a.created_at)-ts(b.created_at)||(a.id<b.id?-1:1);
+function rebuild(){const by=(t,k)=>{const m={};for(const r of Object.values(D[t]))(m[r[k]]=m[r[k]]||[]).push(r);for(const k2 in m)m[k2].sort(cmp);return m};
+  const pa=by('palettes','project_id'),bl=by('palette_blocks','palette_id'),tl=by('todo_lists','project_id'),ti=by('todo_items','list_id'),im=by('images','project_id');
+  P=Object.values(D.projects).map(r=>{const ims=(im[r.id]||[]).filter(i=>URLS[i.storage_path]);
+    return{id:r.id,name:r.name,notes:r.notes,coords:r.coords,t:ts(r.updated_at),imgs:ims.map(i=>({id:i.id,path:i.storage_path})),insp:ims.map(i=>URLS[i.storage_path]),
+      pals:(pa[r.id]||[]).map(q=>({id:q.id,name:q.name,blocks:(bl[q.id]||[]).map(b=>b.name)})),
+      lists:(tl[r.id]||[]).map(l=>({id:l.id,name:l.name,items:(ti[l.id]||[]).map(x=>({id:x.id,t:x.text,d:x.done}))}))}})}
+function dropLocal(t,id){delete D[t][id];
+  if(t==='projects'){for(const q of Object.values(D.palettes))if(q.project_id===id)dropLocal('palettes',q.id);for(const l of Object.values(D.todo_lists))if(l.project_id===id)dropLocal('todo_lists',l.id);for(const i of Object.values(D.images))if(i.project_id===id)dropLocal('images',i.id)}
+  else if(t==='palettes'){for(const b of Object.values(D.palette_blocks))if(b.palette_id===id)delete D.palette_blocks[b.id]}
+  else if(t==='todo_lists'){for(const x of Object.values(D.todo_items))if(x.list_id===id)delete D.todo_items[x.id]}}
+
+/* Bilder: privater Bucket, Anzeige über zeitlich begrenzte Links */
+async function ensureUrls(paths){const m=[...new Set(paths)].filter(p=>p&&!URLS[p]);if(!m.length)return;const{data,error}=await sb.storage.from(BK).createSignedUrls(m,43200);if(error)throw error;(data||[]).forEach(x=>{if(x.signedUrl)URLS[x.path]=x.signedUrl});URLS_T=Date.now()}
+const allPaths=()=>Object.values(D.images).map(i=>i.storage_path);
+async function refreshUrls(){URLS={};await ensureUrls(allPaths());rebuild();softRender()}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&USER&&URLS_T&&Date.now()-URLS_T>6*36e5)refreshUrls().catch(()=>{})});
+
+/* Laden */
+async function fetchAll(t){const out=[];for(let i=0;;i+=1000){const{data,error}=await sb.from(t).select('*').order('created_at').order('id').range(i,i+999);if(error)throw error;out.push(...data);if(data.length<1000)break}return out}
+async function loadAll(){const res=await Promise.all(TB.map(fetchAll)),nd={};TB.forEach((t,i)=>{nd[t]={};res[i].forEach(r=>{nd[t][r.id]=r})});D=nd;
+  try{await ensureUrls(allPaths())}catch(e){msg('Bilder konnten nicht geladen werden: '+errTxt(e))}rebuild()}
+
+/* Änderungen: erst lokal (sofort sichtbar), dann in die Datenbank */
+function dbIns(t,row){row.created_at=new Date().toISOString();D[t][row.id]={...row,updated_at:row.created_at};rebuild();
+  wr(t+':'+row.id,async()=>{const{data,error}=await sb.from(t).insert(row).select().maybeSingle();if(error)throw error;const l=D[t][row.id];if(l&&data&&data.updated_at)l.updated_at=data.updated_at})}
+function dbUpd(t,id,patch,delay){const r=D[t][id];if(!r)return;Object.assign(r,patch);rebuild();const k=t+':'+id,o=pend.get(k)||{patch:{}};Object.assign(o.patch,patch);clearTimeout(o.timer);pend.set(k,o);
+  o.timer=setTimeout(()=>{pend.delete(k);const pt=o.patch;ipat[k]=Object.assign(ipat[k]||{},pt);wr(k,async()=>{const{data,error}=await sb.from(t).update(pt).eq('id',id).select().maybeSingle();if(error)throw error;const l=D[t][id];if(l&&data&&!pend.has(k))l.updated_at=data.updated_at})},delay===undefined?350:delay)}
+function dbDel(t,id){const k=t+':'+id,o=pend.get(k);if(o){clearTimeout(o.timer);pend.delete(k)}
+  const paths=t==='projects'?Object.values(D.images).filter(i=>i.project_id===id).map(i=>i.storage_path):(t==='images'&&D.images[id]?[D.images[id].storage_path]:[]);
+  dropLocal(t,id);rebuild();
+  wr(k,async()=>{const{error}=await sb.from(t).delete().eq('id',id);if(error)throw error;if(paths.length)await sb.storage.from(BK).remove(paths)})}
+function addBlock(pid,name){if(Object.values(D.palette_blocks).some(b=>b.palette_id===pid&&b.name===name))return;dbIns('palette_blocks',{id:nid(),palette_id:pid,name})}
+function delBlock(pid,name){const b=Object.values(D.palette_blocks).find(x=>x.palette_id===pid&&x.name===name);if(b)dbDel('palette_blocks',b.id)}
+async function putImg(pid,du){const id=nid(),path=pid+'/'+id+'.jpg',blob=await(await fetch(du)).blob(),row={id,project_id:pid,storage_path:path,created_at:new Date().toISOString()},k='images:'+id;
+  URLS[path]=du;D.images[id]=row;rebuild();softRender();infl[k]=1;
+  try{await enq(async()=>{const u=await sb.storage.from(BK).upload(path,blob,{contentType:'image/jpeg',cacheControl:'3600',upsert:false});if(u.error)throw u.error;
+      const r=await sb.from('images').insert(row);if(r.error){await sb.storage.from(BK).remove([path]);throw r.error}})}
+  catch(e){dropLocal('images',id);rebuild();softRender();throw e}finally{infl[k]=0}}
+const rmImg=(p,i)=>{const m=p.imgs[i];if(m)dbDel('images',m.id)};
+
+/* Echtzeit: Änderungen anderer Geräte übernehmen */
+function onRT(pl){const t=pl.table,n=pl.new,o=pl.old;if(!D[t])return;
+  if(pl.eventType==='DELETE'){const id=o&&o.id;if(id&&D[t][id]){dropLocal(t,id);rebuild();sched()}return}
+  if(!n||!n.id)return;const k=t+':'+n.id,c=D[t][n.id];
+  if(c){if(dirty(k)){const mine={...(ipat[k]||{}),...((pend.get(k)||{}).patch||{})};if(!Object.keys(mine).length)return;for(const f in n)if(!(f in mine)&&f!=='updated_at')c[f]=n[f];rebuild();sched();return}if(ts(n.updated_at)<ts(c.updated_at))return}
+  D[t][n.id]=n;
+  if(t==='images'){ensureUrls([n.storage_path]).catch(()=>{}).then(()=>{rebuild();sched()});return}
+  rebuild();sched()}
+function subscribe(){if(ch)sb.removeChannel(ch);ch=sb.channel('fw-sync');TB.forEach(t=>ch.on('postgres_changes',{event:'*',schema:'public',table:t},onRT));
+  ch.subscribe(s=>{if(s==='SUBSCRIBED'){online=true;setSt();if(wasDown){wasDown=false;loadAll().then(softRender).catch(()=>{})}}else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'||s==='CLOSED'){online=false;wasDown=true;setSt()}})}
+let rq=0;const sched=()=>{if(rq)return;rq=requestAnimationFrame(()=>{rq=0;softRender()})};
+function softRender(){if(!['home','proj','pal','insp','todo'].includes(st.v))return;const a=document.activeElement,id=a&&a.id&&$('v').contains(a)?a.id:null,sel=id?[a.selectionStart,a.selectionEnd]:null,val=id?a.value:'',y=scrollY;
+  render(0);scrollTo(0,y);if(id){const n=$(id);if(n){if(id==='qb'||id==='tn'){n.value=val;if(id==='qb')$('pg').innerHTML=tiles(val)}n.focus({preventScroll:true});try{n.setSelectionRange(sel[0],sel[1])}catch(e){}}}}
+
+/* Anmeldung */
+const tmo=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('Zeitüberschreitung')),ms))]);
+const canStore=()=>{try{localStorage.setItem('fw-t','1');localStorage.removeItem('fw-t');return true}catch(e){return false}};
+const lastEmail=()=>{try{return localStorage.getItem('fw-email')||''}catch(e){return ''}};
+const sessionSaved=()=>{try{for(let i=0;i<localStorage.length;i++)if(/^sb-.*-auth-token$/.test(localStorage.key(i)))return true}catch(e){}return false};
+addEventListener('online',()=>{if(st.v==='err')boot()});
+async function boot(){
+  if(!CFG.url||!CFG.key||!window.supabase){st={v:'cfg'};render();return}
+  if(!sb){sb=window.supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+    sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'&&USER)leave('Sitzung abgelaufen. Bitte neu anmelden.')})}
+  st={v:'load'};render();
+  let r;try{r=await tmo(sb.auth.getSession(),10000)}catch(e){st={v:'err',msg:'Die Anmeldung wurde nicht rechtzeitig geprüft. Deine Anmeldung bleibt gespeichert.'};render();return}
+  if(r.error){st={v:'err',msg:errTxt(r.error)+'. Deine Anmeldung bleibt gespeichert.'};render();return}
+  if(!r.data.session){st={v:'auth'};render();return}
+  await enter(r.data.session.user)}
+async function enter(user){USER=user;$('so').hidden=false;st={v:'load'};render();
+  let m;try{m=await tmo(sb.rpc('is_member'),12000)}catch(e){st={v:'err',msg:'Der Server antwortet nicht. Prüfe deine Verbindung.'};render();return}
+  if(m.error){if(m.status===401||/jwt|token/i.test(m.error.message||'')){const s=sb;leave('Deine Sitzung ist abgelaufen. Bitte neu anmelden.');s.auth.signOut({scope:'local'}).catch(()=>{});return}
+    st={v:'err',msg:errTxt(m.error)};render();return}
+  if(m.data!==true){st={v:'deny'};render();return}
+  try{await tmo(loadAll(),45000)}catch(e){st={v:'err',msg:errTxt(e)};render();return}
+  subscribe();setSt();st={v:'home'};render(1)}
+function leave(m){USER=null;online=false;if(ch&&sb)sb.removeChannel(ch);ch=null;D=Object.fromEntries(TB.map(t=>[t,{}]));URLS={};P=[];pend.forEach(o=>clearTimeout(o.timer));pend.clear();$('so').hidden=true;setSt();st={v:'auth',msg:m};render(1)}
+async function login(){const e=$('au_e').value.trim(),p=$('au_p').value,m=$('au_m'),b=$('au_b');
+  if(!e||!p){m.textContent='Bitte E-Mail und Passwort eingeben.';return}
+  b.disabled=true;m.textContent='Anmelden …';
+  let r;try{r=await tmo(sb.auth.signInWithPassword({email:e,password:p}),15000)}catch(x){b.disabled=false;m.textContent='Anmeldung fehlgeschlagen: keine Antwort vom Server.';return}
+  const{data,error}=r;
+  if(error){b.disabled=false;m.textContent=/invalid login/i.test(error.message)?'E-Mail oder Passwort stimmt nicht.':'Anmeldung fehlgeschlagen: '+errTxt(error);return}
+  try{localStorage.setItem('fw-email',e)}catch(x){}
+  await enter(data.user);
+  if(USER&&canStore()&&!sessionSaved())msg('Hinweis: Die Anmeldung konnte auf diesem Gerät nicht gespeichert werden. Beim nächsten Öffnen musst du dich neu anmelden.')}
+/* Abmelden gilt nur für dieses Gerät, andere Geräte bleiben angemeldet */
+$('so').onclick=async()=>{const s=sb;leave();try{await s.auth.signOut({scope:'local'})}catch(e){}};
+
+/* Ansichten für Anmeldung und Status */
+const msgV=(t,s)=>`<h1>${esc(t)}<small>${esc(s||'')}</small></h1>`;
+const authV=m=>`<h1>Anmelden<small>Forever World ist privat. Nur freigegebene Konten haben Zugriff.</small></h1><form class="auth" id="au_f"><input class="ti s" id="au_e" name="email" type="email" placeholder="E-Mail" value="${esc(lastEmail())}" autocomplete="username" autocapitalize="off" spellcheck="false"><input class="ti s" id="au_p" name="password" type="password" placeholder="Passwort" autocomplete="current-password"><button class="btn pri" id="au_b" type="submit">Anmelden</button><div class="mt" id="au_m">${esc(m||'')}</div>${canStore()?'':'<div class="mt">Dein Browser blockiert das Speichern von Website-Daten (privates Fenster oder strenger Datenschutz). Du musst dich dann bei jedem Öffnen neu anmelden.</div>'}</form>`;
+const denyV=()=>msgV('Kein Zugriff','Das Konto '+(USER&&USER.email||'')+' ist nicht freigegeben. Die E-Mail muss in der Tabelle allowed_emails stehen.')+`<button class="btn" data-op="lo">Abmelden</button>`;
+const errV=()=>msgV('Verbindung fehlgeschlagen',st.msg)+`<button class="btn" data-op="rt">Erneut versuchen</button> <button class="btn" data-op="lo">Neu anmelden</button>`;
+const cfgV=()=>msgV('Einrichtung fehlt','config.js enthält keine Supabase-Werte, oder die Supabase-Bibliothek konnte nicht geladen werden.');
+
+/* Lokale Daten aus diesem Browser oder einer Export-Datei in die gemeinsame Datenbank übernehmen */
+const migKey=()=>'fw-migrated-'+(USER&&USER.id),migrated=()=>{try{return localStorage.getItem(migKey())==='1'}catch(e){return false}};
+async function up(t,rows){for(let i=0;i<rows.length;i+=200){const{error}=await sb.from(t).upsert(rows.slice(i,i+200),{onConflict:'id',ignoreDuplicates:true});if(error)throw error}}
+async function migrate(list){const own=!list;list=list||LOCAL;if(!USER||!list.length)return;msg('Übernehme '+list.length+' Projekte …');
+  const nm=s=>String(s==null?'':s),PR=[],PA=[],BL=[],TL=[],TI=[],IM=[],UP=[];let c=Date.now();const at=()=>new Date(c++).toISOString(),seenI=new Set();
+  for(const lp of list){if(!lp||!lp.id)continue;const pid=nm(lp.id);PR.push({id:pid,name:nm(lp.name),notes:nm(lp.notes),coords:nm(lp.coords),created_at:new Date(lp.t||c++).toISOString()});
+    for(const q of lp.pals||[]){const qid=nm(q.id);PA.push({id:qid,project_id:pid,name:nm(q.name),created_at:at()});const seen=new Set();for(const b of q.blocks||[]){const n=nm(b).slice(0,80);if(!n||seen.has(n))continue;seen.add(n);BL.push({id:qid+'-'+hs(n).toString(36),palette_id:qid,name:n,created_at:at()})}}
+    const ls=lp.lists&&lp.lists.length?lp.lists:(lp.todo&&lp.todo.length?[{id:pid+'-todo',name:'To-do',items:lp.todo}]:[]);
+    for(const l of ls){const lid=nm(l.id);TL.push({id:lid,project_id:pid,name:nm(l.name),created_at:at()});for(const x of l.items||[]){const tx=nm(x.t).slice(0,500);if(tx)TI.push({id:nm(x.id),list_id:lid,text:tx,done:!!x.d,created_at:at()})}}
+    for(const s of lp.insp||[]){if(typeof s!=='string'||!s.startsWith('data:image/'))continue;const iid='m'+hs(s).toString(36)+s.length.toString(36),path=pid+'/'+iid+'.jpg';if(seenI.has(iid))continue;seenI.add(iid);UP.push([path,s]);IM.push({id:iid,project_id:pid,storage_path:path,created_at:at()})}}
+  try{await up('projects',PR);await up('palettes',PA);await up('palette_blocks',BL);await up('todo_lists',TL);await up('todo_items',TI);
+    let n=0;for(const[path,s]of UP){const blob=await(await fetch(s)).blob(),r=await sb.storage.from(BK).upload(path,blob,{contentType:blob.type||'image/jpeg',upsert:true});if(r.error)throw r.error;msg('Bilder hochgeladen: '+(++n)+' von '+UP.length)}
+    await up('images',IM);
+    if(own){try{localStorage.setItem(migKey(),'1')}catch(e){}}
+    await loadAll();softRender();msg(PR.length+' Projekte übernommen. Es wurde nichts doppelt angelegt.')}
+  catch(e){msg('Übernahme fehlgeschlagen: '+errTxt(e)+'. Du kannst es erneut versuchen.')}}
+$('imf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f)$('imt').value=await f.text()};
+$('imc').onclick=async()=>{const t=$('imt').value.trim();if(!t){msg('Bitte JSON einfügen oder eine Datei wählen.');return}let j;try{j=JSON.parse(t)}catch(e){msg('Das ist keine gültige Export-Datei.');return}
+  const l=Array.isArray(j)?j:j&&j.projects;if(!Array.isArray(l)||!l.length){msg('Keine Projekte in der Datei gefunden.');return}$('imp').close();$('imt').value='';await migrate(l)};
+$('imx').onclick=()=>$('imp').close();
+
+/* Blöcke + gezeichnete Texturen */
+const BD='Steinziegel|stone bricks;#777777;b,Stein|stone;#7d7d7d;s,Bruchstein|cobblestone;#6b6b6b;s,Tiefenschiefer|deepslate;#4a4a4f;s,Tiefenschieferziegel|deepslate bricks;#454549;b,Granit|granite;#9a6b58;s,Diorit|diorite;#bdbdbd;s,Andesit|andesite;#888888;s,Sandstein|sandstone;#d8c98c;s,Ziegel|bricks;#96523f;b,Lehmziegel|mud bricks;#8a6a52;b,Eichenholz|oak planks;#b08d4f;p,Fichtenholz|spruce planks;#6e4f2c;p,Birkenholz|birch planks;#cdb77a;p,Schwarzeichenholz|dark oak planks;#3f2812;p,Akazienholz|acacia planks;#ad5b32;p,Kirschholz|cherry planks;#e4b4ae;p,Eichenstamm|oak log;#6b5230;l,Fichtenstamm|spruce log;#3e2b17;l,Birkenstamm|birch log;#d6d3c8;l,Erde|dirt;#866043;d,Grasblock|grass block;#5d8f3a;d,Moosblock|moss block;#5a6e2c;d,Sand|sand;#dbd3a0;w,Kies|gravel;#837f7e;s,Glas|glass;#bfe6f0;g,Weiße Wolle|white wool;#e9ecec;w,Weißer Beton|white concrete;#cfd5d6;w,Schwarzer Beton|black concrete;#08080d;w,Terrakotta|terracotta;#985e43;w,Eisenblock|iron block;#d8d8d8;w,Goldblock|gold block;#f9d03e;w,Diamantblock|diamond block;#62ece0;w,Quarzblock|quartz block;#ebe6df;w,Obsidian|obsidian;#14101f;s,Netherrack|netherrack;#6f3535;s,Leuchtstein|glowstone;#f6c36b;s,Seelaterne|sea lantern;#bfe3d8;b,Prismarin|prismarine;#5c9c8a;s,Amethystblock|amethyst block;#8a62c4;s,Kupferblock|copper block;#c06c4c;w,Kohleerz|coal ore;#2f2f2f;o,Eisenerz|iron ore;#d8af93;o'.split(',').map(s=>{const[a,c,k]=s.split(';');return{n:a.split('|'),c,k}});
+const TC={},USR={},cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hs(s){let h=2166136261;for(const c of s)h=Math.imul(h^c.charCodeAt(0),16777619);return h>>>0}
+function findB(k){let b=null,l=0;for(const e of BD)for(const a0 of e.n){const a=a0.toLowerCase();if(a===k)return e;if(a.length>=4&&a.length>l&&k.includes(a)){b=e;l=a.length}}return b}
+function tex(name){const k=name.toLowerCase().trim();if(TC[k])return TC[k];
+  const e=findB(k),u=USR[k.replace(/ /g,'_')]||(e&&e.n[1]&&USR[e.n[1].replace(/ /g,'_')]);if(u)return TC[k]=u;const kind=e?e.k:'s',base=e?e.c:'#'+((hs(k)&0x7f7f7f)+0x404040).toString(16).padStart(6,'0'),R=rng(hs(k)),n=parseInt(base.slice(1),16),rgb=[n>>16,n>>8&255,n&255],stone=[125,125,125],c=document.createElement('canvas');c.width=c.height=16;const x=c.getContext('2d');
+  for(let y=0;y<16;y++)for(let i=0;i<16;i++){let v=(R()-.5)*.22,col=rgb,a=1;
+    if(kind==='p')v+=(y%4===3?-.22:0)+((i+(y>>2)*5)%16===0?-.18:0);
+    else if(kind==='l')v=(R()-.5)*.14+(i%4===0?-.16:0)+(i%2?.04:0);
+    else if(kind==='b'){const off=(y>>2)%2?4:0;if(y%4===3||(i+off)%8===0){col=[170,170,160];v=(R()-.5)*.08}else v*=.6}
+    else if(kind==='o'){col=stone;if(R()<.2&&i>1&&y>1&&i<14&&y<14){col=rgb;v*=1.4}else v=(R()-.5)*.18}
+    else if(kind==='g'){const ed=i===0||y===0||i===15||y===15;a=ed?.95:(R()<.06?.7:.28);v=(R()-.5)*.06}
+    else if(kind==='w')v*=.35;else if(kind==='d'){v*=1.4;if(R()<.1)v-=.2}
+    x.fillStyle=`rgba(${col.map(q=>Math.max(0,Math.min(255,Math.round(q*(1+v))))).join(',')},${a})`;x.fillRect(i,y,1,1)}
+  return TC[k]=c.toDataURL()}
+function mosH(b,c){const n=b.length,m=n>=9?9:n>=6?6:n>=4?4:n;return `<div class="mos ${c||''}" style="--n:${n>=6?3:n>=4?2:n}">${b.slice(0,m).map(x=>`<img src="${tex(x)}" alt="">`).join('')}</div>`}
+
+/* Ansichten */
+const cp=()=>P.find(x=>x.id===st.p),cq=()=>cp().pals.find(x=>x.id===st.q);
+const bar=(t)=>`<div class="bar"><button class="ib gl" data-op="bk">‹</button><span>${esc(t)}</span></div>`;
+const seg=a=>`<div class="seg"><button class="${a==='home'?'on':''}" data-op="tab" data-t="home">🏗️ Projekte</button><button class="${a==='pals'?'on':''}" data-op="tab" data-t="pals">🧱 Paletten</button></div>`;
+function palsV(){const L=[...P].sort((a,b)=>b.t-a.t),n=L.reduce((s,p)=>s+p.pals.length,0);
+  return seg('pals')+`<h1>Paletten<small>${n} Paletten in ${L.length} Projekten</small></h1>`+(L.length?L.map(p=>`<h2>${esc(p.name)||'Ohne Namen'}<button class="lk" data-op="apx" data-p="${p.id}">＋ Palette</button></h2>${p.pals.length?`<div class="pl">${p.pals.map(q=>`<div class="card" data-op="opx" data-p="${p.id}" data-q="${q.id}"><div class="cv">${q.blocks.length?mosH(q.blocks.slice(0,9)):'🧱'}</div><div class="cb"><h3>${esc(q.name)||'Palette'}</h3><p>${q.blocks.length} Blöcke</p></div></div>`).join('')}</div>`:'<div class="mt">Noch keine Paletten.</div>'}`).join(''):'<div class="mt">Lege zuerst ein Bauprojekt an.</div>')}
+function homeV(){const L=[...P].sort((a,b)=>b.t-a.t);
+  const mg=LOCAL.length&&!migrated()?`<div class="note"><span>In diesem Browser liegen ${LOCAL.length} lokale Projekte, die noch nicht in der gemeinsamen Datenbank sind.</span><button class="btn pri" data-op="mig">Hochladen</button></div>`:'';
+  return seg('home')+mg+`<h1>Bauprojekte<small>${L.length?L.length+' Projekte':'Starte dein erstes Projekt'}</small></h1><div class="hg">${L.map(p=>{const pq=p.pals.find(q=>q.blocks.length);return `<div class="card" data-op="open" data-p="${p.id}"><div class="cv">${p.insp[0]?`<img src="${p.insp[0]}" alt="">`:pq?mosH(pq.blocks.slice(0,4)):'🏗️'}</div><div class="cb"><h3>${esc(p.name)||'Ohne Namen'}</h3><p>${p.insp.length} Inspiration · ${p.pals.length} Paletten</p></div></div>`}).join('')}<div class="card new" data-op="np">＋ Neues Bauprojekt</div></div><div class="mtl"><button class="lk" data-op="imp">Lokale Daten aus Datei importieren</button></div>`}
+const lst=p=>p.lists||(p.lists=(p.todo&&p.todo.length?[{id:uid(),name:'To-do',items:p.todo}]:[])),cl=p=>lst(p).find(x=>x.id===st.q);
+function projV(p){
+  return bar('Bauprojekte')+`<input class="ti" id="pn" value="${esc(p.name)}" placeholder="Name des Bauprojekts" autocomplete="off"><textarea class="no" id="pt" rows="2" placeholder="Notizen …">${esc(p.notes)}</textarea><input class="co" id="pc" value="${esc(p.coords)}" placeholder="📍 Koordinaten, z. B. 120 64 -300" autocomplete="off">
+  <h2>Inspiration</h2><div class="pl"><div class="card" data-op="oi"><div class="cv">${p.insp.length?`<div class="cl">${p.insp.slice(0,4).map(s=>`<img src="${s}" alt="">`).join('')}</div>`:'🖼️'}</div><div class="cb"><h3>Inspiration</h3><p>${p.insp.length} Bilder</p></div></div></div>
+  <h2>Paletten<button class="lk" data-op="ap">＋ Palette</button></h2>${p.pals.length?`<div class="pl">${p.pals.map(q=>`<div class="card" data-op="op" data-q="${q.id}"><div class="cv"><button class="cx" data-op="cd" data-k="pal" data-id="${q.id}">×</button>${q.blocks.length?mosH(q.blocks.slice(0,6)):'🧱'}</div><div class="cb"><h3>${esc(q.name)||'Palette'}</h3><p>${q.blocks.length} Blöcke</p></div></div>`).join('')}</div>`:'<div class="mt">Noch keine Paletten.</div>'}
+  <h2>To-do-Listen<button class="lk" data-op="al">＋ To-do-Liste</button></h2>${lst(p).length?`<div class="pl">${lst(p).map(l=>{const dn=l.items.filter(x=>x.d).length;return `<div class="card" data-op="ol" data-q="${l.id}"><div class="cv"><button class="cx" data-op="cd" data-k="list" data-id="${l.id}">×</button>${l.items.length?`<div class="tp"><b>${dn}/${l.items.length}</b><div class="pb"><i style="width:${Math.round(dn/l.items.length*100)}%"></i></div></div>`:'✅'}</div><div class="cb"><h3>${esc(l.name)||'To-do'}</h3><p>${l.items.length-dn} offen</p></div></div>`}).join('')}</div>`:'<div class="mt">Noch keine Listen.</div>'}
+  <button class="btn d" data-op="dp">Projekt löschen</button>`}
+function inspV(p){return bar(p.name||'Bauprojekt')+`<h1>Inspiration<small>${p.insp.length} Bilder · tippen zum Vergrößern</small></h1><button class="btn" data-op="ai">＋ Bilder hinzufügen</button><div style="height:20px"></div>`+(p.insp.length?`<div class="ig big">${p.insp.map((s,i)=>`<div data-op="zi" data-i="${i}"><img src="${s}" alt=""><button class="x" data-op="ri" data-i="${i}">×</button></div>`).join('')}</div>`:'<div class="drop" data-op="ai">Bilder hierher ziehen, einfügen (Strg+V) oder tippen</div>')}
+function todoV(p){const l=cl(p)||{name:'',items:[]},L=l.items,d=L.filter(x=>x.d).length;
+  return bar(p.name||'Bauprojekt')+`<input class="ti" id="ln" value="${esc(l.name)}" placeholder="Name der Liste" autocomplete="off"><div class="mt">${d} von ${L.length} erledigt</div>${L.length?`<div class="pb big"><i style="width:${Math.round(d/L.length*100)}%"></i></div>`:''}<input class="ti s" id="tn" placeholder="Neue Aufgabe … (Enter)" autocomplete="off"><div class="tl">${L.map(x=>`<div class="tr ${x.d?'dn':''}" data-op="tk" data-t="${x.id}"><i class="ck"></i><span>${esc(x.t)}</span><button class="lk" data-op="td" data-t="${x.id}">×</button></div>`).join('')}</div><button class="btn d" data-op="dl">Liste löschen</button>`}
+const BAD=/(_side|_top|_bottom|_front|_back|_inner|_stage\d+|_overlay|_\d+|_on|_off|_lit)$/;
+function labels(){const out=[],seen=new Set();Object.keys(USR).sort().filter(k=>!BAD.test(k)).forEach(k=>{const nm=k.replace(/_/g,' '),e=BD.find(b=>b.n.some(a=>a.toLowerCase()===nm)),l=e?e.n[0]:cap(nm);if(!seen.has(l)){seen.add(l);out.push(l)}});BD.forEach(b=>{if(!seen.has(b.n[0])){seen.add(b.n[0]);out.push(b.n[0])}});return out}
+function tiles(q){const c=cq();q=(q||'').toLowerCase().trim();return labels().filter(l=>!q||l.toLowerCase().includes(q)||((findB(l.toLowerCase())||{n:[]}).n).some(a=>a.toLowerCase().includes(q))).slice(0,200).map(l=>`<button class="pt ${c.blocks.includes(l)?'on':''}" data-op="tg" data-n="${esc(l)}"><img src="${tex(l)}" alt=""><span>${esc(l)}</span></button>`).join('')}
+function palV(p,q){return bar(p.name||'Bauprojekt')+`<input class="ti" id="qn" value="${esc(q.name)}" placeholder="Name der Palette" autocomplete="off">${q.blocks.length?mosH(q.blocks,'big'):'<div class="mt">Noch keine Blöcke – wähle unten welche aus.</div>'}
+  <h2>Verwendete Blöcke</h2>${q.blocks.length?`<div class="bu">${q.blocks.map((b,i)=>`<div><img src="${tex(b)}" alt="">${esc(b)}<button class="lk" data-op="rb" data-i="${i}">×</button></div>`).join('')}</div>`:''}
+  <h2>Block hinzufügen<span><button class="lk" data-op="ri">📷 Aus Bild</button><button class="lk" data-op="ij">.jar wählen</button><button class="lk" data-op="ifd">Ordner</button></span></h2><input class="ti s" id="qb" placeholder="Suchen oder eigenen Namen tippen + Enter" autocomplete="off"><div class="pg" id="pg">${tiles('')}</div><div class="mt">${Object.keys(USR).length?Object.keys(USR).length+' Minecraft-Texturen geladen':'Echte Minecraft-Texturen: wähle deine Minecraft-.jar (z. B. 1.21.jar), einmalig.'}</div><button class="btn d" data-op="dq">Palette löschen</button>`}
+function render(dir){const v=$('v');
+  if(st.v==='proj'||st.v==='pal'||st.v==='insp'||st.v==='todo'){const p=cp();if(!p){msg('Dieses Projekt gibt es nicht mehr.');st={v:'home'}}else if(st.v==='pal'&&!cq()){msg('Diese Palette gibt es nicht mehr.');st={v:'proj',p:p.id}}else if(st.v==='todo'&&!cl(p)){msg('Diese Liste gibt es nicht mehr.');st={v:'proj',p:p.id}}}
+  v.innerHTML=({home:homeV,pals:palsV,proj:()=>projV(cp()),pal:()=>palV(cp(),cq()),insp:()=>inspV(cp()),todo:()=>todoV(cp()),load:()=>msgV('Lade Daten …','Verbindung zu Supabase'),auth:()=>authV(st.msg),deny:denyV,err:errV,cfg:cfgV})[st.v]();v.className='';if(dir){void v.offsetWidth;v.className=dir>0?'fw':'bk'}}
+const keep=()=>{const y=scrollY;render(0);scrollTo(0,y)};
+const go=(v,p,q,dir,from)=>{st={v,p,q,from};render(dir);scrollTo(0,0)};
+
+/* Palette aus Bild erkennen (nur im Browser, Farbvergleich mit den Texturen) */
+const SIG={};let RI=null;
+function sg(im,x,y,w,h){const c=document.createElement('canvas');c.width=c.height=8;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(im,x,y,w,h,0,0,8,8);const d=g.getImageData(0,0,8,8).data,o=[];for(let i=0;i<256;i+=4)o.push(d[i],d[i+1],d[i+2]);return o}
+const sig=src=>SIG[src]?Promise.resolve(SIG[src]):new Promise(r=>{const im=new Image();im.onload=()=>r(SIG[src]=sg(im,0,0,im.width,im.height));im.onerror=()=>r(null);im.src=src});
+async function rdScan(){if(!RI)return;const{im}=RI,co=Math.max(1,Math.min(12,+$('rc').value||1)),ro=Math.max(1,Math.min(8,+$('rr').value||1)),cw=im.width/co,ch=im.height/ro,m=.18,tk=++RI.k;
+  $('rg').innerHTML='<div class="mt">Vergleiche …</div>';const S=[];for(const l of labels()){const g=await sig(tex(l));if(g)S.push([l,g])}if(!RI||tk!==RI.k)return;
+  RI.cells=[];for(let r=0;r<ro;r++)for(let c=0;c<co;c++){const x=c*cw+cw*m,y=r*ch+ch*m,w=cw*(1-2*m),h=ch*(1-2*m),a=sg(im,x,y,w,h),t=document.createElement('canvas');t.width=t.height=56;t.getContext('2d').drawImage(im,x,y,w,h,0,0,56,56);
+    RI.cells.push({th:t.toDataURL(),top:S.map(([l,g])=>[l,g.reduce((q,v,i)=>q+Math.abs(v-a[i]),0)/192]).sort((u,v)=>u[1]-v[1]).slice(0,4),pick:0,on:true})}rdDraw()}
+function rdDraw(){$('rg').innerHTML=RI.cells.map((c,i)=>`<div class="rc ${c.on?'':'off'}"><img src="${c.th}" alt=""><div style="display:flex;gap:6px;flex:1;flex-wrap:wrap">${c.top.map((t,j)=>`<button class="pt ${j===c.pick?'on':''}" data-i="${i}" data-j="${j}"><img src="${tex(t[0])}" alt=""><span>${esc(t[0])}</span></button>`).join('')}</div><button class="lk" data-i="${i}" data-x="1">${c.on?'×':'＋'}</button></div>`).join('')}
+$('rf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f||st.v!=='pal')return;const im=new Image();im.onload=()=>{const a=im.width/im.height,ro=a>=2.2?1:a>=1?2:3,co=ro===1?Math.min(12,Math.round(a)):3;RI={im,k:0};$('rc').value=co;$('rr').value=ro;
+  $('rh').textContent='Jedes Feld wird mit den Texturen verglichen. Stimmt die Aufteilung nicht, ändere Spalten und Zeilen. Tippe bei falschen Treffern die richtige Variante an oder entferne das Feld.'+(Object.keys(USR).length?'':' Ohne .jar sind die Texturen nur gezeichnet, dann zählen nur die Farben.');$('rd').showModal();rdScan()};im.onerror=()=>msg('Das Bild konnte nicht gelesen werden.');im.src=URL.createObjectURL(f)};
+$('rc').onchange=$('rr').onchange=rdScan;
+$('rg').onclick=e=>{const b=e.target.closest('button');if(!b||!RI)return;const c=RI.cells[+b.dataset.i];if(b.dataset.x)c.on=!c.on;else c.pick=+b.dataset.j;rdDraw()};
+$('rx').onclick=()=>$('rd').close();$('rd').onclose=()=>{RI=null};
+$('ra').onclick=()=>{const q=st.v==='pal'&&cq();if(!q||!RI)return;const n=new Set(RI.cells.filter(c=>c.on).map(c=>c.top[c.pick][0]));n.forEach(l=>addBlock(q.id,l));$('rd').close();snd('add');msg(n.size?n.size+' Blöcke hinzugefügt':'Nichts ausgewählt');keep()};
+/* Bilder */
+function readImg(f){return new Promise(r=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.85))};im.src=fr.result};fr.readAsDataURL(f)})}
+async function addImgs(fs){const p=cp();if(!p||!USER||(st.v!=='proj'&&st.v!=='insp'))return;let n=0;
+  for(const f of[...fs].filter(f=>f.type.startsWith('image/'))){try{await putImg(p.id,await readImg(f));n++}catch(e){msg('Bild konnte nicht gespeichert werden: '+errTxt(e))}}
+  if(n){snd('add');msg(n===1?'Bild gespeichert':n+' Bilder gespeichert')}}
+$('fi').onchange=e=>{addImgs(e.target.files);e.target.value=''};
+document.addEventListener('paste',e=>{if(document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA')addImgs(e.clipboardData.files)});
+addEventListener('dragover',e=>e.preventDefault());addEventListener('drop',e=>{e.preventDefault();addImgs(e.dataTransfer.files)});
+
+/* Aktionen */
+$('v').addEventListener('click',e=>{const b=e.target.closest('[data-op]');if(!b)return;const d=b.dataset,op=d.op,p=P.find(x=>x.id===st.p);
+  if(op==='li')login();
+  else if(op==='lo'){$('so').click()}
+  else if(op==='rt')boot();
+  else if(op==='mig')migrate();
+  else if(op==='imp')$('imp').showModal();
+  else if(op==='open'){snd('open');go('proj',d.p,null,1)}
+  else if(op==='np'){const id=nid();dbIns('projects',{id,name:'',notes:'',coords:''});snd('add');go('proj',id,null,1)}
+  else if(op==='tab'){go(d.t,null,null,0)}
+  else if(op==='opx'){snd('open');go('pal',d.p,d.q,1,'pals')}
+  else if(op==='apx'){const id=nid();dbIns('palettes',{id,project_id:d.p,name:''});snd('add');go('pal',d.p,id,1,'pals')}
+  else if(op==='bk'){snd('back');st.v==='proj'?go('home',null,null,-1):st.from==='pals'?go('pals',null,null,-1):go('proj',st.p,null,-1)}
+  else if(op==='oi'){snd('open');go('insp',p.id,null,1)}
+  else if(op==='ol'){snd('open');go('todo',p.id,d.q,1)}
+  else if(op==='al'){const id=nid();dbIns('todo_lists',{id,project_id:p.id,name:''});snd('add');go('todo',p.id,id,1)}
+  else if(op==='tk'){const x=cl(p).items.find(y=>y.id===d.t);if(x){dbUpd('todo_items',x.id,{done:!x.d},0);snd(!x.d?'add':'tap');keep()}}
+  else if(op==='td'){e.stopPropagation();dbDel('todo_items',d.t);snd('del');keep()}
+  else if(op==='cd'){e.stopPropagation();if(!d.arm){b.dataset.arm=1;b.classList.add('c');b.textContent='?';setTimeout(()=>{b.dataset.arm='';b.classList.remove('c');b.textContent='×'},2500);return}snd('del');dbDel(d.k==='pal'?'palettes':'todo_lists',d.id);keep()}
+  else if(op==='ri')$('rf').click();
+  else if(op==='ij')$('tf').click();
+  else if(op==='ifd')$('tfd').click();
+  else if(op==='ai')$('fi').click();
+  else if(op==='ri'){e.stopPropagation();rmImg(p,+d.i);snd('del');keep()}
+  else if(op==='zi'){zset(+d.i);$('zm').showModal()}
+  else if(op==='ap'){const id=nid();dbIns('palettes',{id,project_id:p.id,name:''});snd('add');go('pal',p.id,id,1)}
+  else if(op==='op'){snd('open');go('pal',p.id,d.q,1)}
+  else if(op==='tg'){const c=cq(),i=c.blocks.indexOf(d.n);i>=0?delBlock(c.id,d.n):addBlock(c.id,d.n);snd(i>=0?'tap':'add');keep()}
+  else if(op==='rb'){const c=cq();delBlock(c.id,c.blocks[+d.i]);snd('del');keep()}
+  else if(op==='dq'||op==='dp'||op==='dl'){if(!d.arm){b.dataset.arm=1;b.textContent='Wirklich löschen?';b.classList.add('c');setTimeout(()=>{b.dataset.arm='';b.textContent=op==='dp'?'Projekt löschen':op==='dq'?'Palette löschen':'Liste löschen';b.classList.remove('c')},3000);return}
+    snd('del');if(op==='dl'){dbDel('todo_lists',st.q);go('proj',p.id,null,-1)}else if(op==='dq'){dbDel('palettes',st.q);st.from==='pals'?go('pals',null,null,-1):go('proj',p.id,null,-1)}else{dbDel('projects',p.id);go('home',null,null,-1)}}});
+$('v').addEventListener('input',e=>{const p=P.find(x=>x.id===st.p),id=e.target.id,v=e.target.value;
+  if(id==='pn')dbUpd('projects',p.id,{name:v});else if(id==='pt')dbUpd('projects',p.id,{notes:v});else if(id==='pc')dbUpd('projects',p.id,{coords:v});
+  else if(id==='ln')dbUpd('todo_lists',st.q,{name:v});else if(id==='qn')dbUpd('palettes',st.q,{name:v});else if(id==='qb')$('pg').innerHTML=tiles(v)});
+$('v').addEventListener('submit',e=>{e.preventDefault();if(e.target.id==='au_f')login()});
+$('v').addEventListener('keydown',e=>{if(e.target.id==='au_e'&&e.key==='Enter'&&!$('au_p').value){e.preventDefault();$('au_p').focus();return}
+  if(e.target.id==='tn'&&e.key==='Enter'){const v=e.target.value.trim();if(!v)return;dbIns('todo_items',{id:nid(),list_id:st.q,text:v.slice(0,500),done:false});snd('add');keep();$('tn').focus();return}
+  if(e.target.id==='qb'&&e.key==='Enter'){const v=e.target.value.trim(),c=cq();if(!v)return;const f=findB(v.toLowerCase()),name=(f?f.n[0]:v).slice(0,80);if(!c.blocks.includes(name)){addBlock(c.id,name);snd('add')}keep();$('qb').focus()}});
+$('zx').onclick=()=>$('zm').close();
+/* Zoom: Mausrad, Pinch, Ziehen, Doppelklick, Buttons, Pfeile */
+let Z={s:1,x:0,y:0,i:0},zpt=new Map(),zpd=0,zmv=0;
+const zap=()=>{$('zi').style.transform=`translate(${Z.x}px,${Z.y}px) scale(${Z.s})`;$('zr').textContent=(Math.round(Z.s*10)/10)+'×'};
+function zset(i){const p=cp();if(!p)return;Z.i=Math.max(0,Math.min(p.insp.length-1,i));$('zi').src=p.insp[Z.i];Z.s=1;Z.x=Z.y=0;zap();$('zl').hidden=Z.i<=0;$('zn').hidden=Z.i>=p.insp.length-1}
+function zs(n,px,py){n=Math.max(1,Math.min(10,n));const r=$('zc').getBoundingClientRect(),cx=(px===undefined?r.left+r.width/2:px)-r.left-r.width/2,cy=(py===undefined?r.top+r.height/2:py)-r.top-r.height/2,k=n/Z.s;Z.x=cx-(cx-Z.x)*k;Z.y=cy-(cy-Z.y)*k;Z.s=n;if(n===1){Z.x=0;Z.y=0}zap()}
+const zpa=()=>[...zpt.values()],zdist=()=>{const a=zpa();return Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1])||1};
+$('zc').onwheel=e=>{e.preventDefault();zs(Z.s*(e.deltaY<0?1.2:1/1.2),e.clientX,e.clientY)};
+$('zc').ondblclick=e=>zs(Z.s>1.05?1:3,e.clientX,e.clientY);
+$('zc').onpointerdown=e=>{zpt.set(e.pointerId,[e.clientX,e.clientY]);$('zc').setPointerCapture(e.pointerId);$('zi').classList.add('dg');zpd=zpt.size===2?zdist():0;zmv=0};
+$('zc').onpointermove=e=>{if(!zpt.has(e.pointerId))return;const o=zpt.get(e.pointerId);zpt.set(e.pointerId,[e.clientX,e.clientY]);zmv+=Math.abs(e.clientX-o[0])+Math.abs(e.clientY-o[1]);
+  if(zpt.size===2){const d=zdist(),a=zpa();if(zpd)zs(Z.s*d/zpd,(a[0][0]+a[1][0])/2,(a[0][1]+a[1][1])/2);zpd=d}else if(Z.s>1){Z.x+=e.clientX-o[0];Z.y+=e.clientY-o[1];zap()}};
+$('zc').onpointerup=$('zc').onpointercancel=e=>{if(e.type==='pointerup'&&zmv<6&&zpt.size===1&&!e.target.closest('img'))$('zm').close();zpt.delete(e.pointerId);zpd=0;if(!zpt.size)$('zi').classList.remove('dg')};
+$('zp').onclick=()=>zs(Z.s*1.5);$('zo').onclick=()=>zs(Z.s/1.5);$('zr').onclick=()=>zs(1);
+$('zl').onclick=()=>zset(Z.i-1);$('zn').onclick=()=>zset(Z.i+1);
+addEventListener('keydown',e=>{if(!$('zm').open)return;if(e.key==='+'||e.key==='=')zs(Z.s*1.5);else if(e.key==='-')zs(Z.s/1.5);else if(e.key==='0')zs(1);else if(e.key==='ArrowLeft'&&!$('zl').hidden)zset(Z.i-1);else if(e.key==='ArrowRight'&&!$('zn').hidden)zset(Z.i+1)});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('zm').open&&!$('imp').open&&['proj','pal','insp','todo'].includes(st.v)){snd('back');st.v==='proj'?go('home',null,null,-1):go('proj',st.p,null,-1)}});
+const msg=t=>{const e=$('toast');e.textContent=t;e.classList.add('s');clearTimeout(msg.t);msg.t=setTimeout(()=>e.classList.remove('s'),2200)};
+async function impTex(files){let n=0;for(const f of files){if(!/\.png$/i.test(f.name))continue;try{const b=await createImageBitmap(f),w=b.width,sz=Math.min(w,64),c=document.createElement('canvas');c.width=c.height=sz;const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.drawImage(b,0,0,w,w,0,0,sz,sz);const k=f.name.replace(/\.png$/i,'').toLowerCase(),d=c.toDataURL();USR[k]=d;try{db.transaction('tx','readwrite').objectStore('tx').put({k,d})}catch(e){}n++}catch(e){}}
+  Object.keys(TC).forEach(k=>delete TC[k]);snd('add');msg(n+' Texturen geladen');if(st.v==='pal')keep()}
+async function impJar(f){msg('Lade …');try{const z=await JSZip.loadAsync(f),pre='assets/minecraft/textures/block/',l=[];for(const q in z.files){if(q.startsWith(pre)&&q.endsWith('.png')&&!q.slice(pre.length).includes('/'))l.push(new File([await z.files[q].async('blob')],q.slice(pre.length),{type:'image/png'}))}l.length?await impTex(l):msg('Keine Block-Texturen gefunden')}catch(e){msg('Fehler beim Lesen der Datei')}}
+$('tf').onchange=$('tfd').onchange=async e=>{const fs=[...e.target.files];e.target.value='';const j=fs.filter(f=>/\.(jar|zip)$/i.test(f.name));for(const x of j)await impJar(x);const pn=fs.filter(f=>!j.includes(f));if(pn.length)impTex(pn)};
+openDB().then(boot);
+</script>
+</body>
+</html>
